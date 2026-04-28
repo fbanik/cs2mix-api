@@ -1,1 +1,489 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CS2 Mix — Sorteador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--or:#F0A500;--bd:#3a3a3a;--tx:#e0e0e0;--mu:#888;--ts:#4fc3f7;--ct:#ffb74d;--gn:#66bb6a;--rd:#ef5350;--pu:#b39ddb}
+body{font-family:'Rajdhani',sans-serif;background:#0d0d0d;color:var(--tx);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 12px}
+.app{width:100%;max-width:580px;background:#111;border-radius:14px;overflow:hidden;border:1px solid var(--bd);box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.hdr{background:#1e1e1e;border-bottom:2px solid var(--or);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:20px;font-weight:700;color:var(--or);letter-spacing:2px;text-transform:uppercase}
+.logo span{color:var(--tx)}
+.sync-status{font-size:11px;letter-spacing:.5px;display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mu);flex-shrink:0;transition:background .3s}
+.dot.ok{background:var(--gn)}.dot.err{background:var(--rd)}.dot.loading{background:var(--or);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;background:#181818;border-bottom:1px solid var(--bd)}
+.tab{flex:1;padding:11px 4px;text-align:center;font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;color:var(--mu);border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--or);border-bottom-color:var(--or);background:#1f1f1f}
+.tab:hover:not(.active){color:var(--tx);background:#1c1c1c}
+.panel{display:none;padding:18px}
+.panel.active{display:block}
+.sec{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:10px}
+.row{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=number]{background:#1e1e1e;border:1px solid var(--bd);border-radius:6px;padding:9px 12px;color:var(--tx);font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+input[type=text]:focus,input[type=number]:focus{border-color:var(--or)}
+input::placeholder{color:var(--mu)}
+.btn{padding:9px 16px;border-radius:6px;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.btn-or{background:var(--or);color:#111}.btn-or:hover{background:#ffb800;transform:translateY(-1px)}
+.btn-gh{background:transparent;border:1px solid var(--bd);color:var(--mu)}.btn-gh:hover{border-color:var(--tx);color:var(--tx)}
+.btn-sm{padding:4px 8px;font-size:11px;background:transparent;border:1px solid transparent;color:var(--rd);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600}
+.btn-sm:hover{background:rgba(239,83,80,.1)}
+.btn-steam{background:#1b2838;border:1px solid #4fc3f7;color:#4fc3f7;padding:6px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;white-space:nowrap;transition:all .2s}
+.btn-steam:hover{background:#243447}
+.btn-steam:disabled{opacity:.4;cursor:not-allowed}
+
+/* Player cards */
+.plist{display:flex;flex-direction:column;gap:6px}
+.prow{background:#1a1a1a;border:1px solid var(--bd);border-radius:8px;overflow:hidden;transition:border-color .2s}
+.prow.playing{border-color:var(--gn)}
+.prow-main{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer}
+.prow:hover .prow-main{background:#1f1f1f}
+.pcheck{font-size:14px;width:18px;text-align:center;color:var(--bd);flex-shrink:0}
+.prow.playing .pcheck{color:var(--gn)}
+.pavatar{width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;border:1px solid var(--bd)}
+.pavatar-placeholder{width:32px;height:32px;border-radius:4px;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:1px solid var(--bd)}
+.pinfo{flex:1;min-width:0}
+.pname{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psteam{font-size:10px;color:var(--mu)}
+.prow-stats{display:flex;gap:6px;padding:6px 12px 8px 58px;flex-wrap:wrap}
+.stat-chip{font-family:'Share Tech Mono',monospace;font-size:11px;background:#222;border:1px solid var(--bd);border-radius:4px;padding:2px 7px;color:var(--tx)}
+.stat-chip span{color:var(--or)}
+.stat-chip.hs span{color:#ef9a9a}
+.stat-chip.wr span{color:var(--gn)}
+.gcbadge{font-family:'Share Tech Mono',monospace;font-size:12px;background:#2a2a2a;border:1px solid var(--bd);border-radius:4px;padding:2px 7px;color:var(--or);min-width:48px;text-align:center;flex-shrink:0}
+.steam-row{display:flex;gap:6px;align-items:center;padding:0 12px 8px 58px}
+
+/* Add player form */
+.add-form{background:#1a1a1a;border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:14px}
+.add-form .row{margin-bottom:8px;flex-wrap:nowrap}
+.steam-hint{font-size:11px;color:var(--mu);margin-top:4px;line-height:1.4}
+.steam-hint a{color:var(--ts);text-decoration:none}
+
+.empty{text-align:center;padding:30px 20px;color:var(--mu);font-size:13px}
+.cntline{font-size:12px;color:var(--mu);margin-bottom:12px}
+.cntline strong{color:var(--or)}
+.playing-count{color:var(--gn)}
+
+/* Config API */
+.api-config{background:#1a1a1a;border:1px solid rgba(240,165,0,.2);border-radius:8px;padding:14px;margin-bottom:16px}
+.api-config input{width:100%}
+.api-status{font-size:11px;margin-top:8px;padding:6px 10px;border-radius:5px;border:1px solid}
+.api-status.ok{background:rgba(102,187,106,.08);border-color:rgba(102,187,106,.3);color:var(--gn)}
+.api-status.err{background:rgba(239,83,80,.08);border-color:rgba(239,83,80,.3);color:var(--rd)}
+.api-status.warn{background:rgba(240,165,0,.08);border-color:rgba(240,165,0,.3);color:#ffd54f}
+
+/* Maps / Format */
+.maps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;margin-bottom:12px}
+.mcard{background:#1e1e1e;border:2px solid var(--bd);border-radius:7px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.mcard.sel{border-color:var(--or);background:#2a2000}
+.mcard:hover:not(.sel){border-color:#555}
+.mchk{position:absolute;top:5px;right:7px;font-size:11px;color:var(--or);opacity:0;transition:opacity .2s}
+.mcard.sel .mchk{opacity:1}
+.micon{font-size:20px;margin-bottom:4px}.mname{font-size:12px;font-weight:600}
+.md-row{display:flex;gap:8px;margin-bottom:14px}
+.md-btn{flex:1;padding:10px 6px;border-radius:7px;border:2px solid var(--bd);background:#1e1e1e;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--mu);transition:all .2s;text-align:center}
+.md-btn.sel{border-color:var(--pu);background:rgba(179,157,219,.08);color:var(--pu)}
+.md-btn:hover:not(.sel){border-color:#555;color:var(--tx)}
+.md-label{font-size:10px;letter-spacing:1px;display:block;margin-top:2px;font-weight:400}
+
+/* Results */
+.sort-btns{display:flex;gap:8px;margin-bottom:16px}
+.res-map-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.res-map-row{background:#1e1e1e;border:1px solid var(--bd);border-radius:7px;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.res-map-num{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mu);min-width:40px}
+.res-map-name{font-size:17px;font-weight:700;color:var(--or);letter-spacing:.5px}
+.teams-wrap{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.tcard{background:#1a1a1a;border-radius:9px;overflow:hidden}
+.thead{padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.thead.ts{background:rgba(79,195,247,.1);border-bottom:2px solid var(--ts)}
+.thead.ct{background:rgba(255,183,77,.1);border-bottom:2px solid var(--ct)}
+.tlabel{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.thead.ts .tlabel{color:var(--ts)}.thead.ct .tlabel{color:var(--ct)}
+.tavg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mu)}
+.tplayers{padding:8px 14px;display:flex;flex-direction:column;gap:4px}
+.tplayer{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #2a2a2a;font-size:13px}
+.tplayer:last-child{border-bottom:none}
+.tplayer-info{flex:1}
+.tplayer-name{font-weight:600}
+.tplayer-kd{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--mu)}
+.diff-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#1e1e1e;border-radius:6px;border:1px solid var(--bd)}
+.diff-g{background:rgba(102,187,106,.12);color:var(--gn);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600}
+.diff-o{background:rgba(240,165,0,.12);color:var(--or);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600}
+.diff-r{background:rgba(239,83,80,.12);color:var(--rd);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600}
+.alert-w{padding:10px 14px;border-radius:6px;font-size:13px;border:1px solid rgba(240,165,0,.3);background:rgba(240,165,0,.07);color:#ffd54f;margin-bottom:12px}
+.divider{border:none;border-top:1px solid var(--bd);margin:14px 0}
+.loading-spin{display:inline-block;width:12px;height:12px;border:2px solid #444;border-top-color:var(--or);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+footer{margin-top:16px;font-size:11px;color:#444;letter-spacing:1px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="logo">CS2 <span>MIX</span></div>
+    <div class="sync-status"><div class="dot ok" id="dot"></div><span id="sync-txt" style="color:var(--gn)">Dados salvos</span></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="sw('players')">👥 Jogadores</div>
+    <div class="tab" onclick="sw('config')">⚙️ Config</div>
+    <div class="tab" onclick="sw('maps')">🗺️ Mapas</div>
+    <div class="tab" onclick="sw('result')">🎲 Sortear</div>
+  </div>
+
+  <!-- JOGADORES -->
+  <div id="tab-players" class="panel active">
+    <div class="add-form">
+      <p class="sec" style="margin-bottom:10px">Adicionar jogador</p>
+      <div class="row" style="margin-bottom:6px">
+        <input type="text" id="in-name" placeholder="Nome ou nick..." style="flex:2;min-width:100px" onkeydown="if(event.key==='Enter')addP()"/>
+        <input type="number" id="in-lvl" placeholder="Level GC" min="1" max="40" style="width:100px" onkeydown="if(event.key==='Enter')addP()"/>
+        <button class="btn btn-or" onclick="addP()">+ Add</button>
+      </div>
+      <div class="row" style="margin-bottom:4px;flex-wrap:nowrap">
+        <input type="text" id="in-steam" placeholder="URL ou SteamID64 (opcional)" style="flex:1;font-size:13px"/>
+        <button class="btn-steam" id="btn-fetch" onclick="fetchSteamPreview()" disabled>🔍 Buscar stats</button>
+      </div>
+      <div class="steam-hint">Ex: steamcommunity.com/id/seunick &nbsp;·&nbsp; <a href="#" onclick="sw('config');return false">Configure a API primeiro</a></div>
+      <div id="steam-preview" style="margin-top:8px"></div>
+    </div>
+    <div id="cnt" class="cntline"></div>
+    <p class="sec">Marque quem joga hoje (máx. 10)</p>
+    <div id="plist" class="plist"><div class="empty">Nenhum jogador ainda.<br>Adicione o grupo acima!</div></div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="tab-config" class="panel">
+    <p class="sec">Backend URL</p>
+    <div class="api-config">
+      <p style="font-size:12px;color:var(--mu);margin-bottom:8px;line-height:1.5">Cole aqui a URL do seu servidor no Render (ex: https://cs2mix-api.onrender.com)</p>
+      <div class="row" style="margin-bottom:8px;flex-wrap:nowrap">
+        <input type="text" id="in-api-url" placeholder="https://seu-server.onrender.com" style="flex:1;font-size:13px"/>
+        <button class="btn btn-or" onclick="saveApiUrl()">Salvar</button>
+      </div>
+      <button class="btn btn-gh" style="font-size:12px;width:100%" onclick="testApi()">🔌 Testar conexão</button>
+      <div id="api-status"></div>
+    </div>
+
+    <p class="sec">Como configurar o servidor</p>
+    <div style="background:#1a1a1a;border:1px solid var(--bd);border-radius:8px;padding:14px;font-size:12px;color:var(--mu);line-height:1.8">
+      <strong style="color:var(--tx)">Passo a passo:</strong><br>
+      1. Crie conta em <strong style="color:var(--ts)">render.com</strong><br>
+      2. Suba os arquivos do backend no GitHub<br>
+      3. No Render: New → Web Service → seu repositório<br>
+      4. Em <em>Environment Variables</em> adicione:<br>
+      &nbsp;&nbsp;<code style="color:var(--or)">STEAM_API_KEY</code> = sua chave da Steam<br>
+      5. Pegue a chave em: <strong style="color:var(--ts)">steamcommunity.com/dev/apikey</strong><br>
+      6. Cole a URL gerada pelo Render aqui
+    </div>
+  </div>
+
+  <!-- MAPAS -->
+  <div id="tab-maps" class="panel">
+    <p class="sec">Formato da partida</p>
+    <div class="md-row">
+      <div class="md-btn sel" id="md1" onclick="setMd(1)">MD1<span class="md-label">melhor de 1</span></div>
+      <div class="md-btn" id="md3" onclick="setMd(3)">MD3<span class="md-label">melhor de 3</span></div>
+      <div class="md-btn" id="md5" onclick="setMd(5)">MD5<span class="md-label">melhor de 5</span></div>
+    </div>
+    <div class="divider" style="margin:10px 0"></div>
+    <p class="sec">Pool de mapas</p>
+    <div id="mgrid" class="maps-grid"></div>
+    <div id="mcount" style="font-size:12px;color:var(--mu)"></div>
+  </div>
+
+  <!-- SORTEAR -->
+  <div id="tab-result" class="panel">
+    <div class="sort-btns">
+      <button class="btn btn-or" onclick="sortear()">🎲 Sortear</button>
+      <button class="btn btn-gh" onclick="sortear()">↺ Ressortear</button>
+    </div>
+    <div id="res"><div class="empty">Configure jogadores e mapas,<br>depois clique em Sortear!</div></div>
+  </div>
+</div>
+<footer>CS2 MIX SORTEADOR · climinhamix.netlify.app</footer>
+
+<script>
+const MAPS=[
+  {n:'Mirage',i:'🏜️'},{n:'Inferno',i:'🔥'},{n:'Dust2',i:'🌵'},
+  {n:'Nuke',i:'☢️'},{n:'Overpass',i:'🌉'},{n:'Ancient',i:'🏛️'},
+  {n:'Anubis',i:'🐺'},{n:'Vertigo',i:'🏙️'},{n:'Cache',i:'🏭'},
+  {n:'Train',i:'🚂'},{n:'Cobblestone',i:'🗺️'},
+];
+const LS_KEY='cs2mix-players-v2';
+const LS_API='cs2mix-api-url';
+let players=[], selMaps=new Set(['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass']), md=1;
+let apiUrl='';
+let steamPreviewData=null;
+
+// ── Storage ──
+function loadAll(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw) players=JSON.parse(raw).map(p=>({...p,playing:false}));
+    else players=[];
+  }catch(e){players=[];}
+  apiUrl=localStorage.getItem(LS_API)||'';
+  if(apiUrl) document.getElementById('in-api-url').value=apiUrl;
+  updateFetchBtn();
+  renderPlayers();
+}
+function savePlayers(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify(players.map(({id,name,lvl,steamid,avatar,stats})=>({id,name,lvl,steamid,avatar,stats}))));
+    flash('Salvo ✓','ok');
+  }catch(e){flash('Erro','err');}
+}
+function saveApiUrl(){
+  apiUrl=document.getElementById('in-api-url').value.trim().replace(/\/$/,'');
+  localStorage.setItem(LS_API,apiUrl);
+  updateFetchBtn();
+  flash('URL salva ✓','ok');
+}
+function flash(msg,state){
+  const dot=document.getElementById('dot');const txt=document.getElementById('sync-txt');
+  dot.className='dot '+state;txt.textContent=msg;txt.style.color=state==='ok'?'var(--gn)':'var(--rd)';
+  clearTimeout(flash._t);flash._t=setTimeout(()=>{dot.className='dot ok';txt.textContent='Dados salvos';txt.style.color='var(--gn)';},2000);
+}
+
+// ── Tabs ──
+function sw(name){
+  const names=['players','config','maps','result'];
+  names.forEach((n,i)=>{
+    document.querySelectorAll('.tab')[i]?.classList.toggle('active',n===name);
+    const p=document.getElementById('tab-'+n);
+    if(p){p.classList.toggle('active',n===name);p.style.display=n===name?'block':'none';}
+  });
+}
+document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+document.getElementById('tab-players').style.display='block';
+
+// ── Format / Maps ──
+function setMd(v){md=v;[1,3,5].forEach(x=>document.getElementById('md'+x).classList.toggle('sel',x===v));renderMaps();}
+function renderMaps(){
+  document.getElementById('mgrid').innerHTML=MAPS.map(m=>`
+    <div class="mcard ${selMaps.has(m.n)?'sel':''}" onclick="togMap('${m.n}')">
+      <div class="mchk">✓</div><div class="micon">${m.i}</div><div class="mname">${m.n}</div>
+    </div>`).join('');
+  const ok=selMaps.size>=md;
+  document.getElementById('mcount').innerHTML=`<span style="color:${ok?'var(--gn)':'var(--rd)'}">${selMaps.size} mapa(s) no pool</span> — MD${md} precisa de pelo menos ${md}`;
+}
+function togMap(n){if(selMaps.has(n)){if(selMaps.size<=1)return;selMaps.delete(n);}else selMaps.add(n);renderMaps();}
+
+// ── Steam API ──
+function updateFetchBtn(){
+  document.getElementById('btn-fetch').disabled=!apiUrl;
+}
+
+async function testApi(){
+  const statusEl=document.getElementById('api-status');
+  statusEl.className='api-status warn';statusEl.textContent='Testando conexão...';
+  if(!apiUrl){statusEl.className='api-status err';statusEl.textContent='⚠ Configure a URL primeiro.';return;}
+  try{
+    const res=await fetch(apiUrl+'/');
+    const data=await res.json();
+    if(res.ok){statusEl.className='api-status ok';statusEl.textContent='✅ Servidor online: '+data.status;}
+    else throw new Error('Resposta inesperada');
+  }catch(e){
+    statusEl.className='api-status err';
+    statusEl.textContent='❌ Não foi possível conectar. Verifique a URL e se o Render está rodando.';
+  }
+}
+
+async function fetchSteamPreview(){
+  const steamInput=document.getElementById('in-steam').value.trim();
+  const preview=document.getElementById('steam-preview');
+  if(!steamInput){preview.innerHTML='<span style="font-size:12px;color:var(--rd)">Digite a URL ou SteamID64</span>';return;}
+  if(!apiUrl){preview.innerHTML='<span style="font-size:12px;color:var(--rd)">Configure o servidor na aba ⚙️ Config primeiro</span>';return;}
+  preview.innerHTML='<span style="font-size:12px;color:var(--mu)"><span class="loading-spin"></span>Buscando stats na Steam...</span>';
+  steamPreviewData=null;
+  try{
+    const res=await fetch(`${apiUrl}/stats?steamid=${encodeURIComponent(steamInput)}`);
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Erro ao buscar');
+    steamPreviewData=data;
+    preview.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;background:#1e1e1e;border:1px solid var(--gn);border-radius:7px;padding:10px">
+        <img src="${data.avatar}" style="width:40px;height:40px;border-radius:4px;border:1px solid var(--bd)"/>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;color:var(--tx)">${esc(data.name)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+            <span class="stat-chip">K/D <span>${data.stats.kd}</span></span>
+            <span class="stat-chip hs">HS <span>${data.stats.hsPercent}%</span></span>
+            <span class="stat-chip wr">Win <span>${data.stats.winRate}%</span></span>
+            <span class="stat-chip">ADR <span>${data.stats.adr}</span></span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--gn)">✓ Encontrado</div>
+      </div>`;
+  }catch(e){
+    steamPreviewData=null;
+    preview.innerHTML=`<span style="font-size:12px;color:var(--rd)">❌ ${e.message}</span>`;
+  }
+}
+
+// ── Players ──
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function addP(){
+  const ne=document.getElementById('in-name');
+  const le=document.getElementById('in-lvl');
+  const name=ne.value.trim();
+  const lvl=parseInt(le.value);
+  if(!name){ne.focus();return;}
+  if(!lvl||lvl<1||lvl>40){le.style.borderColor='var(--rd)';setTimeout(()=>le.style.borderColor='',900);le.focus();return;}
+  if(players.find(p=>p.name.toLowerCase()===name.toLowerCase())){ne.style.borderColor='var(--rd)';setTimeout(()=>ne.style.borderColor='',900);return;}
+
+  const player={id:Date.now(),name,lvl,playing:false,steamid:null,avatar:null,stats:null};
+
+  if(steamPreviewData){
+    player.steamid=steamPreviewData.steamid;
+    player.avatar=steamPreviewData.avatar;
+    player.stats=steamPreviewData.stats;
+    player.name=name; // mantém o nick do grupo, não o da Steam
+  }
+
+  players.push(player);
+  ne.value='';le.value='';
+  document.getElementById('in-steam').value='';
+  document.getElementById('steam-preview').innerHTML='';
+  steamPreviewData=null;
+  ne.focus();
+  renderPlayers();
+  savePlayers();
+}
+
+function togPlay(id){
+  const p=players.find(x=>x.id===id);if(!p)return;
+  const count=players.filter(x=>x.playing).length;
+  if(!p.playing&&count>=10){
+    const el=document.querySelector(`.prow[data-id="${id}"]`);
+    if(el){el.style.borderColor='var(--rd)';setTimeout(()=>el.style.borderColor=p.playing?'var(--gn)':'var(--bd)',700);}
+    return;
+  }
+  p.playing=!p.playing;renderPlayers();
+}
+
+function removeP(id,e){
+  e.stopPropagation();players=players.filter(p=>p.id!==id);renderPlayers();savePlayers();
+}
+
+async function refreshStats(id,e){
+  e.stopPropagation();
+  const p=players.find(x=>x.id===id);if(!p||!p.steamid||!apiUrl)return;
+  const btn=e.target;btn.disabled=true;btn.textContent='...';
+  try{
+    const res=await fetch(`${apiUrl}/stats?steamid=${p.steamid}`);
+    const data=await res.json();
+    if(res.ok){p.stats=data.stats;p.avatar=data.avatar;renderPlayers();savePlayers();}
+  }catch(e){}
+  btn.disabled=false;btn.textContent='↺';
+}
+
+function renderPlayers(){
+  const list=document.getElementById('plist');
+  const cnt=document.getElementById('cnt');
+  if(!players.length){list.innerHTML='<div class="empty">Nenhum jogador ainda.<br>Adicione o grupo acima!</div>';cnt.innerHTML='';return;}
+  const playing=players.filter(p=>p.playing).length;
+  cnt.innerHTML=`<strong>${players.length}</strong> no grupo &nbsp;·&nbsp; <span class="playing-count">✓ ${playing}/10 marcados para hoje</span>`;
+  const sorted=[...players].sort((a,b)=>a.playing===b.playing?b.lvl-a.lvl:a.playing?-1:1);
+  list.innerHTML=sorted.map(p=>`
+    <div class="prow ${p.playing?'playing':''}" data-id="${p.id}">
+      <div class="prow-main" onclick="togPlay(${p.id})">
+        <span class="pcheck">${p.playing?'✓':'○'}</span>
+        ${p.avatar
+          ? `<img class="pavatar" src="${p.avatar}" onerror="this.style.display='none'"/>`
+          : `<div class="pavatar-placeholder">🎮</div>`}
+        <div class="pinfo">
+          <div class="pname">${esc(p.name)}</div>
+          ${p.steamid?`<div class="psteam">Steam vinculada</div>`:''}
+        </div>
+        <span class="gcbadge">GC ${p.lvl}</span>
+        <button class="btn-sm" onclick="removeP(${p.id},event)">✕</button>
+      </div>
+      ${p.stats?`
+      <div class="prow-stats">
+        <span class="stat-chip">K/D <span>${p.stats.kd}</span></span>
+        <span class="stat-chip hs">HS <span>${p.stats.hsPercent}%</span></span>
+        <span class="stat-chip wr">Win <span>${p.stats.winRate}%</span></span>
+        <span class="stat-chip">ADR <span>${p.stats.adr}</span></span>
+        ${apiUrl&&p.steamid?`<button class="btn-steam" style="padding:2px 7px;font-size:10px" onclick="refreshStats(${p.id},event)">↺</button>`:''}
+      </div>`:''}
+    </div>`).join('');
+}
+
+// ── Balanceamento ──
+function balance(plist){
+  // Usa KD se disponível, senão level GC como peso
+  const half=Math.floor(plist.length/2);
+  const withScore=plist.map(p=>({...p,score:p.stats?p.stats.kd:p.lvl/10}));
+  const suf=[...withScore].sort(()=>Math.random()-.5).sort((a,b)=>b.score-a.score);
+  const A=[],B=[];let sA=0,sB=0;
+  for(const p of suf){
+    if(A.length>=half&&B.length<half){B.push(p);sB+=p.score;}
+    else if(B.length>=half&&A.length<half){A.push(p);sA+=p.score;}
+    else if(sA<=sB){A.push(p);sA+=p.score;}
+    else{B.push(p);sB+=p.score;}
+  }
+  return{A,B};
+}
+
+function sortear(){
+  const res=document.getElementById('res');
+  const playing=players.filter(p=>p.playing);
+  if(playing.length!==10){
+    const n=playing.length;
+    res.innerHTML=`<div class="alert-w">Você marcou ${n} jogador(es). São necessários exatamente 10 para o 5v5.<br>${n<10?`Marque mais ${10-n}.`:`Desmarque ${n-10}.`}</div>`;return;
+  }
+  if(selMaps.size<md){
+    res.innerHTML=`<div class="alert-w">Pool tem ${selMaps.size} mapa(s) mas MD${md} precisa de ${md}.</div>`;return;
+  }
+  const maps=[...selMaps].sort(()=>Math.random()-.5).slice(0,md);
+  const{A,B}=balance(playing);
+  const avgKd=(team)=>(team.reduce((s,p)=>s+(p.stats?p.stats.kd:p.lvl/10),0)/team.length).toFixed(2);
+  const avgGc=(team)=>(team.reduce((s,p)=>s+p.lvl,0)/team.length).toFixed(1);
+  const diff=Math.abs(parseFloat(avgKd(A))-parseFloat(avgKd(B)));
+  const dc=diff<0.1?'diff-g':diff<0.3?'diff-o':'diff-r';
+  const dl=diff<0.1?'✓ Muito equilibrado':diff<0.3?'~ Razoável':'⚠ Desequilibrado';
+  const hasStats=playing.some(p=>p.stats);
+
+  const mhtml=maps.map((mn,i)=>{
+    const mo=MAPS.find(x=>x.n===mn);
+    return `<div class="res-map-row"><span class="res-map-num">${md===1?'MAPA':'JOGO '+(i+1)}</span><span style="font-size:18px">${mo?mo.i:''}</span><span class="res-map-name">${mn}</span></div>`;
+  }).join('');
+
+  const thtml=(label,side,team)=>{
+    const s=[...team].sort((a,b)=>(b.stats?b.stats.kd:b.lvl/10)-(a.stats?a.stats.kd:a.lvl/10));
+    return `<div class="tcard"><div class="thead ${side}">
+      <span class="tlabel">${label}</span>
+      <span class="tavg">GC: ${avgGc(team)} ${hasStats?'· K/D: '+avgKd(team):''}</span>
+    </div><div class="tplayers">${s.map(p=>`
+      <div class="tplayer">
+        ${p.avatar?`<img src="${p.avatar}" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--bd)"/>`:`<span style="font-size:16px">🎮</span>`}
+        <div class="tplayer-info">
+          <div class="tplayer-name">${esc(p.name)}</div>
+          ${p.stats?`<div class="tplayer-kd">K/D ${p.stats.kd} · HS ${p.stats.hsPercent}% · ADR ${p.stats.adr}</div>`:''}
+        </div>
+        <span class="gcbadge">GC ${p.lvl}</span>
+      </div>`).join('')}</div></div>`;
+  };
+
+  res.innerHTML=`
+    <p class="sec" style="margin-bottom:8px">MD${md} — ${md===1?'1 mapa sorteado':md+' mapas sorteados'}</p>
+    <div class="res-map-list">${mhtml}</div>
+    <div class="divider"></div>
+    <p class="sec" style="margin-bottom:8px">Times (5 × 5) ${hasStats?'· equilibrado por K/D':'· equilibrado por Level GC'}</p>
+    <div class="teams-wrap">${thtml('Time T','ts',A)}${thtml('Time CT','ct',B)}</div>
+    <div class="diff-row"><span style="font-size:12px;color:var(--mu)">Equilíbrio ${hasStats?'(K/D)':'(GC)'}:</span><span class="${dc}">${dl} (${diff.toFixed(2)})</span></div>`;
+}
+
+renderMaps();loadAll();
+</script>
+</body>
+</html>
