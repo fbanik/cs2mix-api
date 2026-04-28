@@ -317,7 +317,7 @@ async function fetchSteamPreview(){
             <span class="stat-chip">K/D <span>${data.stats.kd}</span></span>
             <span class="stat-chip hs">HS <span>${data.stats.hsPercent}%</span></span>
             <span class="stat-chip wr">Win <span>${data.stats.winRate}%</span></span>
-            <span class="stat-chip">ADR <span>${data.stats.adr}</span></span>
+            
           </div>
         </div>
         <div style="font-size:11px;color:var(--gn)">✓ Encontrado</div>
@@ -412,7 +412,7 @@ function renderPlayers(){
         <span class="stat-chip">K/D <span>${p.stats.kd}</span></span>
         <span class="stat-chip hs">HS <span>${p.stats.hsPercent}%</span></span>
         <span class="stat-chip wr">Win <span>${p.stats.winRate}%</span></span>
-        <span class="stat-chip">ADR <span>${p.stats.adr}</span></span>
+        
         ${apiUrl&&p.steamid?`<button class="btn-steam" style="padding:2px 7px;font-size:10px" onclick="refreshStats(${p.id},event)">↺</button>`:''}
       </div>`:''}
     </div>`).join('');
@@ -468,7 +468,7 @@ function sortear(){
         ${p.avatar?`<img src="${p.avatar}" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--bd)"/>`:`<span style="font-size:16px">🎮</span>`}
         <div class="tplayer-info">
           <div class="tplayer-name">${esc(p.name)}</div>
-          ${p.stats?`<div class="tplayer-kd">K/D ${p.stats.kd} · HS ${p.stats.hsPercent}% · ADR ${p.stats.adr}</div>`:''}
+          ${p.stats?`<div class="tplayer-kd"> K/D ${p.stats.kd} · HS ${p.stats.hsPercent}%</div>`:''}
         </div>
         <span class="gcbadge">GC ${p.lvl}</span>
       </div>`).join('')}</div></div>`;
