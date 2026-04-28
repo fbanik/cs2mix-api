@@ -82,7 +82,6 @@ app.get('/stats', async (req, res) => {
     const hsPercent  = kills > 0 ? ((hsKills / kills) * 100).toFixed(1) : '0.0';
     const accuracy   = shotsFired > 0 ? ((shotsHit / shotsFired) * 100).toFixed(1) : '0.0';
     const winRate    = roundsPlayed > 0 ? ((wins / roundsPlayed) * 100).toFixed(1) : '0.0';
-    const adr        = roundsPlayed > 0 ? (damage / roundsPlayed).toFixed(1) : '0.0';
 
     res.json({
       steamid: resolvedId,
@@ -98,8 +97,8 @@ app.get('/stats', async (req, res) => {
         winRate: parseFloat(winRate),
         wins,
         roundsPlayed,
-        mvps,
-        adr: parseFloat(adr)
+        mvps
+    
       }
     });
 
